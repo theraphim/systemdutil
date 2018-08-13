@@ -4,12 +4,9 @@ import (
 	"net"
 	"os"
 
-	"log"
 	"net/http"
 	"os/signal"
 	"strings"
-
-	"github.com/coreos/go-systemd/activation"
 )
 
 type TcpOrUdp struct {
@@ -26,11 +23,9 @@ type Fatalf interface {
 type defaultLogger struct{}
 
 func (f defaultLogger) Fatalf(format string, v ...interface{}) {
-	log.Fatalf(format, v)
 }
 
 func (f defaultLogger) Infof(format string, v ...interface{}) {
-	log.Printf(format, v)
 }
 
 var Logger Fatalf = defaultLogger{}
@@ -64,8 +59,8 @@ func Find(sockets []TcpOrUdp, start int, udp bool) int {
 	return -1
 }
 
-func ListenSystemd() (udps []net.PacketConn, https, grpcs []net.Listener) {
-	sockets := WrapSystemdSockets(activation.Files(false))
+func ListenSystemd(files []*os.File) (udps []net.PacketConn, https, grpcs []net.Listener) {
+	sockets := WrapSystemdSockets(files)
 
 	for _, v := range sockets {
 		if v.Err != nil {
