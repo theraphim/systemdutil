@@ -83,6 +83,22 @@ func ListenSystemd(files []*os.File) (udps []net.PacketConn, https, grpcs []net.
 	return udps, https, grpcs
 }
 
+func ListenSystemdEx(files []*os.File) (udps []net.PacketConn, tcps []net.Listener, err error) {
+	for _, v := range WrapSystemdSockets(files) {
+		if v.Err != nil {
+			return nil, nil, v.Err
+		}
+		if v.Udp != nil {
+			udps = append(udps, v.Udp)
+		}
+
+		if v.Tcp != nil {
+			tcps = append(tcps, v.Tcp)
+		}
+	}
+	return udps, tcps, nil
+}
+
 func MustListenUDPSlice(what []string) (udps []net.PacketConn) {
 	for _, v := range what {
 		l, err := net.ListenPacket("udp", v)
