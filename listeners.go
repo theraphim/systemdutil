@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"os/signal"
 	"strings"
+
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 type TcpOrUdp struct {
@@ -127,4 +130,31 @@ func SplitListen(s string) []string {
 		return nil
 	}
 	return strings.Split(s, ",")
+}
+
+type GServer interface {
+	http.Handler
+	Serve(net.Listener) error
+}
+
+func ServeH2C(gs GServer, https, grpcs []net.Listener) {
+	rootHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.HasPrefix(
+			r.Header.Get("Content-Type"), "application/grpc") {
+			gs.ServeHTTP(w, r)
+		} else {
+			http.DefaultServeMux.ServeHTTP(w, r)
+		}
+	})
+	h2s := http2.Server{}
+	h1s := http.Server{
+		Handler: h2c.NewHandler(rootHandler, &h2s),
+	}
+
+	for _, s := range https {
+		go h1s.Serve(s)
+	}
+	for _, s := range grpcs {
+		go gs.Serve(s)
+	}
 }
