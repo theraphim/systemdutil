@@ -10,12 +10,15 @@ import (
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type TcpOrUdp struct {
-	Tcp net.Listener
-	Udp net.PacketConn
-	Err error
+	Tcp  net.Listener
+	Udp  net.PacketConn
+	Name string
+	Err  error
 }
 
 type Fatalf interface {
@@ -23,33 +26,26 @@ type Fatalf interface {
 	Infof(format string, v ...interface{})
 }
 
-type defaultLogger struct{}
-
-func (f defaultLogger) Fatalf(format string, v ...interface{}) {
-}
-
-func (f defaultLogger) Infof(format string, v ...interface{}) {
-}
-
-var Logger Fatalf = defaultLogger{}
+var Logger Fatalf = log.StandardLogger()
 
 // WrapSystemdSockets will take a list of files from Files function and create
 // UDP sockets or TCP listeners for them.
 func WrapSystemdSockets(files []*os.File) (result []TcpOrUdp) {
-	result = make([]TcpOrUdp, len(files))
+	result = make([]TcpOrUdp, 0, len(files))
 	for i, fd := range files {
+		r := TcpOrUdp{
+			Name: fd.Name(),
+		}
 		if pc, err := net.FilePacketConn(fd); err == nil {
-			result[i].Udp = pc
-			continue
-		}
-		if sc, err := net.FileListener(fd); err == nil {
-			result[i].Tcp = sc
-			continue
+			r.Udp = pc
+		} else if sc, err := net.FileListener(fd); err == nil {
+			r.Tcp = sc
 		} else {
-			result[i].Err = err
+			r.Err = err
 		}
+		result = append(result, r)
 	}
-	return
+	return result
 }
 
 func Find(sockets []TcpOrUdp, start int, udp bool) int {
@@ -173,4 +169,8 @@ func ServeH2C(gs GServer, https, grpcs []net.Listener) {
 	for _, s := range grpcs {
 		go gs.Serve(s)
 	}
+}
+
+func Init() {
+	jhInit()
 }
