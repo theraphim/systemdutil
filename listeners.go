@@ -32,7 +32,7 @@ var Logger Fatalf = log.StandardLogger()
 // UDP sockets or TCP listeners for them.
 func WrapSystemdSockets(files []*os.File) (result []TcpOrUdp) {
 	result = make([]TcpOrUdp, 0, len(files))
-	for i, fd := range files {
+	for _, fd := range files {
 		r := TcpOrUdp{
 			Name: fd.Name(),
 		}
