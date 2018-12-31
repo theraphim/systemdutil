@@ -27,6 +27,7 @@ func findVar(names ...string) bool {
 			return true
 		}
 	}
+	return false
 }
 
 func jhInit() {
