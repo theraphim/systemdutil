@@ -150,12 +150,16 @@ type GServer interface {
 }
 
 func ServeH2C(gs GServer, https, grpcs []net.Listener) {
+	ServeH2C2(gs, http.DefaultServeMux, https, grpcs)
+}
+
+func ServeH2C2(gs GServer, handler http.Handler, https, grpcs []net.Listener) {
 	rootHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.HasPrefix(
 			r.Header.Get("Content-Type"), "application/grpc") {
 			gs.ServeHTTP(w, r)
 		} else {
-			http.DefaultServeMux.ServeHTTP(w, r)
+			handler.ServeHTTP(w, r)
 		}
 	})
 	h2s := http2.Server{}
