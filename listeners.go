@@ -36,10 +36,10 @@ func WrapSystemdSockets(files []*os.File) (result []TcpOrUdp) {
 		r := TcpOrUdp{
 			Name: fd.Name(),
 		}
-		if pc, err := net.FilePacketConn(fd); err == nil {
-			r.Udp = pc
-		} else if sc, err := net.FileListener(fd); err == nil {
+		if sc, err := net.FileListener(fd); err == nil {
 			r.Tcp = sc
+		} else if pc, err := net.FilePacketConn(fd); err == nil {
+			r.Udp = pc
 		} else {
 			r.Err = err
 		}
