@@ -1,6 +1,8 @@
 package systemdutil
 
 import (
+	"fmt"
+	"log"
 	"net"
 	"os"
 
@@ -10,8 +12,6 @@ import (
 
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type TcpOrUdp struct {
@@ -26,7 +26,15 @@ type Fatalf interface {
 	Infof(format string, v ...interface{})
 }
 
-var Logger Fatalf = log.StandardLogger()
+type deflog struct {
+	*log.Logger
+}
+
+func (s deflog) Infof(format string, v ...interface{}) {
+	s.Logger.Output(2, fmt.Sprintf(format, v...))
+}
+
+var Logger Fatalf = deflog{log.Default()}
 
 // WrapSystemdSockets will take a list of files from Files function and create
 // UDP sockets or TCP listeners for them.
@@ -176,5 +184,4 @@ func ServeH2C2(gs GServer, handler http.Handler, https, grpcs []net.Listener) {
 }
 
 func Init() {
-	jhInit()
 }
