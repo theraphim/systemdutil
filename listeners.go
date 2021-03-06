@@ -1,7 +1,6 @@
 package systemdutil
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -23,18 +22,10 @@ type TcpOrUdp struct {
 
 type Fatalf interface {
 	Fatalf(format string, v ...interface{})
-	Infof(format string, v ...interface{})
+	Printf(format string, v ...interface{})
 }
 
-type deflog struct {
-	*log.Logger
-}
-
-func (s deflog) Infof(format string, v ...interface{}) {
-	s.Logger.Output(2, fmt.Sprintf(format, v...))
-}
-
-var Logger Fatalf = deflog{log.Default()}
+var Logger Fatalf = log.Default()
 
 // WrapSystemdSockets will take a list of files from Files function and create
 // UDP sockets or TCP listeners for them.
@@ -142,7 +133,7 @@ func WaitSigint() {
 	control := make(chan os.Signal, 1)
 	signal.Notify(control, os.Interrupt)
 	sig := <-control
-	Logger.Infof("Exiting due to signal %s", sig)
+	Logger.Printf("Exiting due to signal %s", sig)
 }
 
 func SplitListen(s string) []string {
