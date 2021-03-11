@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"syscall"
 
 	"net/http"
 	"os/signal"
@@ -131,7 +132,7 @@ func ServeAll(gs Server, https, grpcs []net.Listener) {
 
 func WaitSigint() {
 	control := make(chan os.Signal, 1)
-	signal.Notify(control, os.Interrupt)
+	signal.Notify(control, os.Interrupt, syscall.SIGTERM)
 	sig := <-control
 	Logger.Printf("Exiting due to signal %s", sig)
 }
